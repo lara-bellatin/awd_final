@@ -163,5 +163,5 @@ CHANNEL_LAYERS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ['https://awd-final-cbg1.onrender.com', 'awd-final-cbg1.onrender.com']
+CSRF_TRUSTED_ORIGINS = ["https://awd-final-cbg1.onrender.com"]
 CSRF_COOKIE_SECURE = True
