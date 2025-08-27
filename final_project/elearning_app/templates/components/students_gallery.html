@@ -1,0 +1,35 @@
+{% load custom_filters %}
+{% for status_label, students in enrolled_students %}
+    <h3 class="text-lg font-semibold text-gray-700 mb-2 mt-6">{{ status_label }} Students</h3>
+    {% if students %}
+        <ul class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {% for student in students %}
+            <li class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-2 hover:shadow transition cursor-pointer"
+                onclick="window.location.href='/users/{{ student.pk }}'">
+                <div class="flex items-center gap-3 mb-2">
+                    {% include 'components/avatar.html' with user=student size=12 %}
+                    <span class="font-semibold text-gray-800 text-md">
+                        {{ student.full_name }}
+                    </span>
+                </div>
+                <div class="text-gray-500 text-sm">
+                    <span class="font-semibold">Progress:</span>
+                    {{ student.course_progress|floatformat:1 }}%
+                </div>
+                {% if student.enrollment.status == 'Active' %}
+                    <div class="flex flex-row gap-2 mt-2">
+                        <button
+                            onclick="updateEnrollmentStatus({{ student.enrollment.pk }}, 'Removed')"
+                            class="px-3 py-1 rounded bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200 transition"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="text-gray-400 italic mb-6">No {{ status_label|lower }} enrollments.</div>
+    {% endif %}
+{% endfor %}

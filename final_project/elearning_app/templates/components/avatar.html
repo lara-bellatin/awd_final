@@ -1,0 +1,15 @@
+{% if user.profile_picture or picture %}
+    <div class="avatar">
+        <div class="w-{{size}} h-{{size}} rounded-full overflow-hidden">
+            <img
+                src="{% if picture %}{{ picture.url }}{% elif user %}{{ user.profile_picture.url }}{% endif %}"
+                alt="{% if title %}{{ title }}{% elif user %}{{ user.full_name }}{% endif %}'s avatar"
+                class="w-{{size}} h-{{size}} rounded-full object-cover overflow-hidden"
+            >
+        </div>
+    </div>
+{% else %}
+    <div class="w-{{size}} h-{{size}} bg-gray-300 rounded-full flex items-center justify-center">
+        <span class="text-gray-600 font-medium">{% if title %}{{ title|first|upper }}{% elif user %}{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}{% endif %}</span>
+    </div>
+{% endif %}

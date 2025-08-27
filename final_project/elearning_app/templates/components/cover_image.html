@@ -1,0 +1,12 @@
+{% if picture %}
+    <figure class="h-{{ height }} w-full">
+        <img
+            class="w-full h-full object-cover"
+            src="{{ picture.url }}"
+            alt="{{ title }}'s cover image" />
+    </figure>
+{% else %}
+    <div class="h-{{ height }} w-full bg-gray-300 flex items-center justify-center">
+        <span class="text-gray-600 font-medium">?</span>
+    </div>
+{% endif %}

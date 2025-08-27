@@ -1,0 +1,32 @@
+{% load custom_filters %}
+<ul class="flex flex-col gap-3">
+    {% for chat in chats %}
+    <li class="bg-slate-50 border border-slate-200 rounded-xl p-4 hover:shadow transition cursor-pointer"
+        onclick="location.href='/chats/{{ chat.pk }}';">
+        <div class="flex flex-col gap-1">
+            <h2 class="text-md font-semibold text-gray-800">
+                {{ chat.title }}
+            </h2>
+            <p class="text-sm text-gray-500 line-clamp-2">
+                {% if chat.last_message %}
+                    {{ chat.last_message.sender.full_name }}: {{ chat.last_message.text }}
+                {% else %}
+                    No messages yet
+                {% endif %}
+            </p>
+            <div class="text-xs text-gray-400 mt-2 text-right">
+                {{ chat.last_message.sent_at|timesince_single }}
+            </div>
+        </div>
+    </li>
+    {% empty %}
+        <li class="text-gray-400 italic">No chats yet.</li>
+    {% endfor %}
+</ul>
+{% if more_chats %}
+    <div class="flex justify-center mt-4">
+        <a href="/chats/{{ chats.0.pk }}/" class="text-blue-600 hover:underline font-medium">
+            See all chats
+        </a>
+    </div>
+{% endif %}

@@ -1,0 +1,27 @@
+{% load custom_filters %}
+<ul class="flex flex-col gap-3">
+    {% for notification in notifications %}
+    <li class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2">
+        <div class="flex flex-col gap-1">
+            <span class="text-gray-800">{{ notification.content }}</span>
+            <span class="text-xs text-gray-400 text-end">
+                {{ notification.created_at|timesince_single }}
+            </span>
+            <div class="flex gap-2 mt-2">
+                {% if go_to_course %}
+                    <a href="/courses/{{ notification.related_course.pk }}"
+                    class="px-3 py-1 rounded bg-blue-100 text-blue-700 text-xs font-medium hover:bg-blue-200 transition">
+                        Go to Course
+                    </a>
+                {% endif %}
+                <button onclick="dismissNotification({{ notification.pk }})"
+                        class="px-3 py-1 rounded bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200 transition">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </li>
+    {% empty %}
+    <li class="text-gray-400 italic">No unread notifications.</li>
+    {% endfor %}
+</ul>

@@ -1,0 +1,20 @@
+<h1 class="font-bold text-xl text-gray-800 border-b border-slate-200 pb-2 mb-2">
+    About the Teacher
+</h1>
+<div class="flex flex-col items-center gap-3">
+    {% include 'components/avatar.html' with user=teacher size=20 %}
+    <h2 class="text-lg text-gray-800 font-semibold text-center">
+        {{ teacher.full_name }}
+    </h2>
+    {% if teacher.bio %}
+        <p class="text-gray-500 text-sm text-center mb-2">{{ teacher.bio }}</p>
+    {% endif %}
+    <div class="flex flex-col items-center gap-1">
+        <span class="text-xs text-gray-400">Taught Courses</span>
+        <span class="text-base font-medium text-green-700">{{ teacher.get_courses|length }}</span>
+    </div>
+    <a href="/users/{{ teacher.pk }}"
+    class="mt-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100 transition text-center w-full">
+        View Profile
+    </a>
+</div>

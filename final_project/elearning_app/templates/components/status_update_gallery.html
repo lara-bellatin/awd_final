@@ -1,0 +1,62 @@
+{% load custom_filters %}
+<div class="flex flex-col gap-6 w-full">
+    {% for status_update in status_updates %}
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5">
+        <div class="flex items-center gap-4 mb-2">
+            <div class="flex-shrink-0">
+                {% include 'components/avatar.html' with user=status_update.student size=12 %}
+            </div>
+            <div class="flex flex-col flex-1">
+                <div class="flex items-center gap-2">
+                    <a href="/users/{{ status_update.student.pk }}" class="text-gray-800 font-semibold hover:underline">
+                        {% if status_update.student.pk == user.pk %}
+                            You
+                        {% else %}
+                            {{ status_update.student.full_name }}
+                        {% endif %}
+                    </a>
+                    {% if show_course %}
+                        <span class="text-xs text-gray-400">in</span>
+                        <a href="/courses/{{ status_update.course.pk }}" class="text-blue-500 hover:underline">
+                            {{ status_update.course }}
+                        </a>
+                    {% endif %}
+                    {% if status_update.student.pk == user.pk %}
+                        <button
+                            type="button"
+                            onclick="openModal()"
+                            class="ml-2 text-xs text-blue-500 hover:underline"
+                            hx-get="{% url 'status-update-edit' status_update.pk %}"
+                            hx-target="#modal"
+                            hx-trigger="click"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            onclick="openModal()"
+                            class="ml-2 text-xs text-blue-500 hover:underline"
+                            hx-get="{% url 'status-update-delete' status_update.pk %}"
+                            hx-target="#modal"
+                            hx-trigger="click"
+                        >
+                            Delete
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3 mt-0.5">
+                    <span class="text-xs text-gray-400">{{ status_update.created_at|timesince_single }}</span>
+                    <span class="text-xs text-green-600 font-medium">
+                        Progress: {{ status_update.course_progress|default:"0"|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="ml-16 text-gray-700 text-base leading-relaxed">
+            {{ status_update.text }}
+        </div>
+    </div>
+    {% empty %}
+        <div class="text-gray-400 italic">No status updates.</div>
+    {% endfor %}
+</div>

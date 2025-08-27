@@ -1,0 +1,42 @@
+{% load custom_filters %}
+<ul class="flex flex-col gap-3">
+    {% for assignment in assignments %}
+        {% with submission=submitted_assignments|dict_get:assignment.pk %}
+        <li onclick="window.location.href='{% url 'assignment-detail' assignment.pk %}';"
+            class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow transition">
+            <div class="flex flex-row items-center justify-between">
+                <span class="font-semibold text-gray-800 text-md">{{ assignment.title }}</span>
+                {% if submission %}
+                    {% if submission.grade %}
+                    <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">Grade: {{ submission.grade|floatformat:1 }}%</span>
+                    {% else %}
+                    <span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">Awaiting Grade</span>
+                    {% endif %}
+                {% else %}
+                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">Not Submitted</span>
+                {% endif %}
+            </div>
+            {% if assignment.description %}
+                <div class="text-gray-500 text-sm line-clamp-2">{{ assignment.description }}</div>
+            {% endif %}
+            {% if submission %}
+                <div class="flex flex-col gap-1 mt-2">
+                    <span class="text-xs text-gray-500">Submitted on: {{ submission.submitted_on|date:"M d, Y H:i" }}</span>
+                </div>
+            {% else %}
+                <div class="flex flex-col gap-1 mt-2">
+                    {% if assignment.deadline %}
+                        <span class="text-xs text-gray-500">
+                            Deadline: <span class="text-red-600">{{ assignment.deadline|timeuntil_single }}</span>
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-gray-400">No deadline set</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </li>
+        {% endwith %}
+    {% empty %}
+        <li class="text-gray-400 italic">No assignments for this course.</li>
+    {% endfor %}
+</ul>

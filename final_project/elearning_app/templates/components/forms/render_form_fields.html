@@ -1,0 +1,23 @@
+{% load custom_filters %}
+{% for field in form.visible_fields %}
+    <div class="mb-4 overflow-hidden">
+        {{ field.label_tag }}
+        {% if field.field.widget.input_type == "file" %}
+            {{ field|add_class:"file-input text-sm p-2 border border-gray-100 rounded-lg w-full" }}
+        {% elif field.field.widget.input_type == "select" %}
+            {{ field|add_class:"select text-sm p-2 border border-gray-100 rounded-lg w-full" }}
+        {% else %}
+            {{ field|add_class:"text-sm p-2 border border-gray-100 rounded-lg w-full" }}
+        {% endif %}
+        {% if field.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+    </div>
+{% endfor %}
+{% if form.non_field_errors %}
+    <div class="mb-4">
+        {% for error in form.non_field_errors %}
+            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+    </div>
+{% endif %}

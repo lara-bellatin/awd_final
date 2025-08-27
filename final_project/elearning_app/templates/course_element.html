@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex flex-row gap-8 w-full">
+
+    <!-- Sidebar: Modules, Lessons, Assignments -->
+    <aside class="w-1/4 bg-slate-50 border border-slate-200 rounded-lg p-4 h-fit sticky top-8">
+        <!-- Back to Course Button -->
+        <div class="mb-4">
+            <a href="{% url 'course' course.pk %}" class="inline-flex items-center px-4 py-2 rounded text-gray-700 font-medium hover:bg-gray-300 transition">
+                ← Back to Course
+            </a>
+        </div>
+        <h2 class="font-semibold text-lg mb-4 text-gray-700">Course Navigation</h2>
+        <ul class="space-y-4">
+            {% for module in course.modules.all %}
+                <li>
+                    <div class="font-medium text-blue-700 mb-1">{{ module.title }}</div>
+                    <ul class="ml-3 space-y-1">
+                        <!-- Lessons -->
+                        {% for l in module.lessons.all %}
+                            <li>
+                                <a href="{% url 'lesson-detail' l.pk %}"
+                                   class="block px-2 py-1 rounded
+                                   {% if l.pk == lesson.pk %} bg-blue-600 text-white font-bold {% else %} text-blue-700 hover:bg-blue-100 {% endif %}">
+                                    📖 {{ l.title }}
+                                    {% if completed_lessons and l.pk in completed_lessons %}
+                                        <span title="Completed" class="inline-block align-middle ml-1">
+                                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        {% empty %}
+                            <div class="text-gray-400 italic">No lessons in this module.</div>
+                        {% endfor %}
+                        <!-- Assignments -->
+                        {% for a in module.assignments.all %}
+                            <li>
+                                <a href="{% url 'assignment-detail' a.pk %}"
+                                   class="block px-2 py-1 rounded
+                                   {% if a.pk == assignment.pk %} bg-green-600 text-white font-bold {% else %} text-green-700 hover:bg-green-100 {% endif %}">
+                                    📝 {{ a.title }}
+                                    {% if submitted_assignments and a.pk in submitted_assignments %}
+                                        <span title="Submitted" class="inline-block align-middle ml-1">
+                                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        {% empty %}
+                            <div class="text-gray-400 italic">No assignments in this module.</div>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% empty %}
+                <div class="text-gray-400 italic">No modules in this course yet.</div>
+            {% endfor %}
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        {% if lesson %}
+            {% include 'components/lesson.html' with lesson=lesson %}
+        {% elif assignment %}
+            {% include 'components/assignment.html' with assignment=assignment %}
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

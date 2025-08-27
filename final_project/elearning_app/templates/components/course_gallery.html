@@ -1,0 +1,70 @@
+<div class="grid gap-6 w-full md:grid-cols-2 lg:grid-cols-3">
+    {% for course in courses %}
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5 cursor-pointer hover:shadow transition"
+         onclick="location.href='/courses/{{ course.pk }}';">
+        <div class="flex flex-col h-full">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <!-- Status Badge -->
+                    {% if course.status == "upcoming" %}
+                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">Upcoming</span>
+                    {% elif course.status == "ongoing" %}
+                        <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">Ongoing</span>
+                    {% elif course.status == "unpublished" %}
+                        <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">Not Published</span>
+                    {% endif %}
+                    <!-- Duration -->
+                    <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs font-medium">
+                        {{ course.duration_weeks }} week{{ course.duration_weeks|pluralize }}
+                    </span>
+                </div>
+                <h2 class="text-lg font-semibold text-gray-800 mb-1 truncate">
+                    {{ course.title }}
+                </h2>
+                <p class="text-sm text-gray-400 mb-2">
+                    Taught by 
+                    <a href="/users/{{ course.taught_by.pk }}" 
+                        class="text-blue-500 font-medium hover:underline">
+                        {{ course.taught_by.full_name }}
+                    </a>
+                </p>
+                {% if course.description %}
+                    <p class="text-sm text-gray-600 line-clamp-3">{{ course.description }}</p>
+                {% endif %}
+            </div>
+            <div class="mt-auto flex flex-col w-full gap-1 pt-2">
+                {% if view == "stats" %}
+                    {% if course.students_enrolled_count %}
+                        <span class="text-xs text-gray-500">
+                            {{ course.students_enrolled_count }} student{{ course.students_enrolled_count|pluralize }} enrolled
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-gray-400">
+                            No students enrolled yet
+                        </span>
+                    {% endif %}
+                    {% if course.review_count > 0 %}
+                        <span class="text-xs text-yellow-600">
+                            ⭐ {{ course.average_rating|floatformat:1 }} ({{ course.review_count }} review{{ course.review_count|pluralize }})
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-gray-400">
+                            No reviews yet
+                        </span>
+                    {% endif %}
+                {% elif view == "progress" %}
+                    <div class="flex flex-row w-full items-center">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-200 h-2.5 rounded-full transition-all duration-300"
+                                style="width: {{ course.user_progress }}%"></div>
+                        </div>
+                        <span class="text-xs ml-2 text-gray-500">{{ course.user_progress }}%</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <div class="text-gray-400 italic">No courses found.</div>
+    {% endfor %}
+</div>

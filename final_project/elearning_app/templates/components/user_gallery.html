@@ -1,0 +1,30 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+    {% for user in users %}
+    <a href="/users/{{ user.pk }}" class="block bg-white border border-slate-200 rounded-xl p-6 flex flex-col gap-3 shadow hover:shadow-lg transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <div class="flex items-center gap-4">
+            {% include 'components/avatar.html' with user=user size=12 %}
+            <div>
+                <div class="font-semibold text-gray-800 text-lg">{{ user.full_name|default:user.email }}</div>
+                <span class="text-xs px-2 py-1 rounded-full
+                    {% if user.role == 'Teacher' %} bg-sky-100 text-sky-600
+                    {% elif user.role == 'Student' %} bg-amber-100 text-amber-600
+                    {% else %} bg-gray-100 text-gray-600 {% endif %} whitespace-nowrap align-middle">
+                    {{ user.role }}
+                </span>
+            </div>
+            <span class="ml-auto">
+                {% if user.is_blocked %}
+                    <span class="inline-block px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-semibold whitespace-nowrap">Blocked</span>
+                {% endif %}
+            </span>
+        </div>
+        {% if user.bio %}
+        <div class="text-gray-600 text-sm mt-2 line-clamp-2">
+            {{ user.bio }}
+        </div>
+        {% endif %}
+    </a>
+    {% empty %}
+        <div class="col-span-full text-gray-400 italic text-center">No users found.</div>
+    {% endfor %}
+</div>

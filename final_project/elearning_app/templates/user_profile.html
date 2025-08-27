@@ -1,0 +1,93 @@
+{% extends './base.html' %}
+{% load static %}
+{% block content %}
+<div class="flex flex-col gap-10 w-full">
+
+    <!-- User Information -->
+    <div class="flex flex-row gap-8 bg-slate-50 border border-slate-200 rounded-xl w-full p-8 items-center justify-center">
+        <!-- Avatar -->
+        {% include 'components/avatar.html' with user=profile_user size=24 %}
+
+        <!-- Information -->
+        <div class="flex flex-col items-start justify-start mr-auto">
+            <h2 class="text-2xl font-bold text-gray-800">{{ profile_user }}</h2>
+            <div class="px-3 py-1 rounded-xl text-sm font-medium
+                {% if profile_user.role == 'Teacher' %} bg-sky-100 text-sky-600
+                {% else %} bg-amber-100 text-amber-600 {% endif %}">
+                {{ profile_user.role }}
+            </div>
+            {% if profile_user.bio %}
+                <div class="mt-2 text-gray-700 text-sm italic text-center max-w-xs">
+                    {{ profile_user.bio }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- CTAs -->
+        <div class="flex flex-row gap-1 items-center">
+        {% if user.is_authenticated %}
+            {% if user != profile_user %}
+                <button
+                    onclick="startChat(users=[{{ user.pk }}, {{ profile_user.pk }}])"
+                    class="ml-auto px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition"
+                >
+                    Message
+                </button>
+                {% if user.role == 'Teacher' %}
+                    {% if not profile_user.is_blocked %}
+                        <button
+                            type="button"
+                            onclick="blockUser({{ user.pk }}, {{ profile_user.pk }})"
+                            class="ml-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500 transition"
+                        >
+                            Block
+                        </button>
+                    {% else %}
+                        <button
+                            type="button"
+                            onclick="unblockUser({{ user.pk }}, {{ profile_user.pk }})"
+                            class="ml-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500 transition"
+                        >
+                            Unblock
+                        </button>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                    <button
+                        type="button"
+                        onclick="openModal()"
+                        class="mt-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-500 transition"
+                        hx-get="{% url 'user-edit' profile_user.pk %}"
+                        hx-target="#modal"
+                        hx-trigger="click"
+                    >
+                        Edit Profile
+                    </button>
+            {% endif %}
+        {% endif %}
+        </div>
+    </div>
+
+    <!-- Courses -->
+    <div>
+        <h1 class="font-bold text-2xl text-gray-800 mb-6">
+            Courses
+        </h1>
+        {% if profile_user.role == 'Student' %}
+            {% include 'components/course_gallery.html' with courses=courses view="progress" %}
+        {% else %}
+            {% include 'components/course_gallery.html' with courses=courses view="stats" %}
+        {% endif %}
+    </div>
+
+    {% if profile_user.role == 'Student' %}
+        <!-- Status Updates -->
+        <div>
+            <h1 class="font-bold text-2xl text-gray-800 mb-6">
+                Status Updates
+            </h1>
+            {% include 'components/status_update_gallery.html' with status_updates=status_updates show_course=True %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

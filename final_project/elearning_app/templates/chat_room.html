@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - {{ chat.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: #e5e7eb transparent;
+        }
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 3px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen overflow-hidden">
+    <div class="flex h-full">
+        <!-- Sidebar with chat list -->
+        <div class="flex flex-col w-1/4 bg-slate-50 py-4 px-4 gap-8 border-r border-gray-200">
+            <a href="{% url 'index' %}" class="inline-flex items-center mb-4 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors w-fit">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Home
+            </a>
+            <h1 class="font-bold text-xl">Chats</h1>
+            {% include 'components/chat_list.html' with chats=chats %}
+        </div>
+
+        <!-- Main Content - Chat box -->
+        <div class="flex-1 flex flex-col">
+            <div class="bg-white border-b border-gray-200 p-4 flex items-center">
+                <div class="flex items-center space-x-3">
+                    {% include 'components/avatar.html' with picture=chat.picture title=chat.title size=12 %}
+                    <div>
+                        <h3 class="font-semibold text-gray-900">{{ chat.title }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 chat-messages">
+                {% for message in messages %}
+                    <div class="flex {% if message.sender == user %}justify-end{% else %}justify-start{% endif %}">
+                        <div class="max-w-xs lg:max-w-md">
+                            {% if message.sender != user %}
+                                <div class="flex items-end space-x-2">
+                                    <div class="flex-shrink-0">
+                                        {% if message.sender.profile_picture %}
+                                            <img src="{{ message.sender.profile_picture.url }}" alt="{{ message.sender.full_name }}" class="w-8 h-8 rounded-full object-cover">
+                                        {% else %}
+                                            <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                                                <span class="text-white text-xs font-medium">{{ message.sender.full_name|first|upper }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="bg-gray-100 rounded-lg px-4 py-2">
+                                        <p class="text-sm text-gray-900">{{ message.text }}</p>
+                                        {% for attachment in message.attachments.all %}
+                                            <a href="{{ attachment.attachment.url }}" target="_blank" class="text-blue-500 text-sm hover:underline">Attachment</a>
+                                        {% endfor %}
+                                        <p class="text-xs text-gray-500 mt-1">{{ message.sent_date|date:"g:i A" }}</p>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="bg-blue-500 text-white rounded-lg px-4 py-2">
+                                    <p class="text-sm">{{ message.text }}</p>
+                                    {% for attachment in message.attachments.all %}
+                                        <a href="{{ attachment.attachment.url }}" target="_blank" class="text-blue-100 text-sm hover:underline">Attachment</a>
+                                    {% endfor %}
+                                    <p class="text-xs text-blue-100 mt-1">{{ message.sent_at|date:"g:i A" }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-gray-500 py-8">
+                        <p>No messages yet. Start the conversation!</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Message input -->
+            <div class="bg-white border-t border-gray-200 p-4">
+                <form id="chat-message-form" enctype="multipart/form-data" class="flex space-x-3">
+                    <input 
+                        id="chat-message-input"
+                        type="text" 
+                        placeholder="Type your message..." 
+                        class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    >
+                    <input 
+                        type="file" 
+                        id="chat-message-attachments" 
+                        name="attachments" 
+                        multiple 
+                        class="border border-gray-300 rounded-lg px-4 py-2"
+                    >
+                    <button 
+                        type="submit"
+                        id="chat-message-submit" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                    >
+                        <span>Send</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{ chat.pk|json_script:"chat-pk" }}
+    {{ user.pk|json_script:"user-pk" }}
+    
+    <script>
+        const chatId = JSON.parse(document.getElementById('chat-pk').textContent);
+        const userId = JSON.parse(document.getElementById('user-pk').textContent);
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('chat-message-input');
+        const sendButton = document.getElementById('chat-message-submit');
+        const messageForm = document.getElementById('chat-message-form');
+
+        // WebSocket connection
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/' + chatId + '/'
+        );
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function createMessageElement(message, senderId, senderName, timestamp, isCurrentUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`;
+            
+            if (isCurrentUser) {
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-blue-500 text-white rounded-lg px-4 py-2">
+                            <p class="text-sm">${message}</p>
+                            <p class="text-xs text-blue-100 mt-1">${timestamp}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="flex items-end space-x-2">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-xs font-medium">${senderName.charAt(0).toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg px-4 py-2">
+                                <p class="text-sm text-gray-900">${message}</p>
+                                <p class="text-xs text-gray-500 mt-1">${timestamp}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return messageDiv;
+        }
+
+        // WebSocket message handler
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            const messageElement = createMessageElement(
+                data.message,
+                data.sender_id || userId,
+                data.sender_name || 'You',
+                timestamp,
+                (data.sender_id || userId) == userId
+            );
+            
+            messagesContainer.appendChild(messageElement);
+            scrollToBottom();
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'user_pk': userId,
+                    'chat_pk': chatId
+                }));
+                messageInput.value = '';
+            }
+        }
+
+        document.getElementById('chat-message-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-message-input');
+            const files = document.getElementById('chat-message-attachments').files;
+            const formData = new FormData();
+            formData.append('text', input.value);
+            for (let file of files) {
+                formData.append('attachments', file);
+            }
+            await fetch(`/api/chats/${chatId}/messages/`, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": getCookie('csrftoken')
+                }
+            });
+            input.value = '';
+            document.getElementById('chat-message-attachments').value = '';
+        };
+
+        sendButton.onclick = sendMessage;
+
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        messageInput.focus();
+        scrollToBottom();
+    </script>
+</body>
+</html>

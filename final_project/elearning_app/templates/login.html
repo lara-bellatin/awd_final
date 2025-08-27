@@ -1,0 +1,13 @@
+{% extends './base.html' %}
+{% load custom_filters %}
+{% block content %}
+<strong>Log In</strong>
+<form id="login_form" method="post" class="flex flex-col gap-2 text-wrap w-1/4">
+    {% csrf_token %}
+    {% render_form_fields login_form %}
+    <input type="submit" name="submit" value="Log In" class="w-full mt-4 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition" />
+</form>
+<p class="mt-4 text-sm text-gray-600">
+    No account? <a href="{% url 'register' %}" class="text-blue-600 hover:underline">Register</a>
+</p>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% load custom_filters %}
+<ul class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    {% for submission in submissions %}
+    <li class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-2 hover:shadow transition">
+        <div class="flex flex-row items-center justify-between mb-1">
+            <span class="font-semibold text-gray-800 text-md">
+                {{ submission.assignment.title }}
+            </span>
+            {% if submission.grade %}
+                <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                    Graded: {{ submission.grade|floatformat:1 }}%
+                </span>
+            {% else %}
+                <span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+                    Awaiting Grade
+                </span>
+            {% endif %}
+        </div>
+        <div class="text-gray-500 text-sm">
+            <span class="font-semibold">Student:</span>
+            <a href="/users/{{ submission.student.pk }}" class="text-blue-600 hover:underline">
+                {{ submission.student.full_name }}
+            </a>
+        </div>
+        <div class="text-gray-500 text-sm">
+            <span class="font-semibold">Submitted on:</span>
+            {{ submission.submitted_on|date:"M d, Y H:i" }}
+        </div>
+        {% if submission.file_submission %}
+        <div class="text-gray-500 text-sm">
+            <span class="font-semibold">File:</span>
+            <a href="{{ submission.file_submission.url }}" class="text-blue-600 hover:underline" target="_blank">
+                {{ submission.file_submission.name|default:"Download" }}
+            </a>
+        </div>
+        {% endif %}
+        {% if submission.text_submission %}
+        <div class="text-gray-500 text-sm">
+            <span class="font-semibold">Text:</span>
+            <span class="italic">{{ submission.text_submission|truncatechars:100 }}</span>
+        </div>
+        {% endif %}
+        {% if submission.feedback %}
+        <div class="text-gray-500 text-sm">
+            <span class="font-semibold">Feedback:</span>
+            <span>{{ submission.feedback|default:"—" }}</span>
+        </div>
+        {% endif %}
+        <div class="flex flex-row gap-2 mt-2">
+            <button
+                type="button"
+                onclick="openModal()"
+                class="px-3 py-1 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 transition"
+                hx-get="{% url 'assignment-grade' submission.pk %}"
+                hx-target="#modal"
+                hx-trigger="click"
+            >
+                {% if submission.grade %}Edit Grade{% else %}Grade{% endif %}
+            </button>
+        </div>
+    </li>
+    {% empty %}
+        <li class="text-gray-400 italic col-span-full">No submissions yet.</li>
+    {% endfor %}
+</ul>

@@ -1,0 +1,49 @@
+{% load custom_filters %}
+<div class="flex flex-col gap-6 w-full">
+    {% for review in reviews %}
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-5">
+        <div class="flex flex-row items-center gap-3 mb-2">
+            <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                <span class="text-gray-600 font-semibold text-lg">
+                    {{ review.student.full_name|first|upper }}{% if review.student.last_name %}{{ review.student.last_name|first|upper }}{% endif %}
+                </span>
+            </div>
+            <div class="flex flex-col">
+                {% if not user.is_authenticated %}
+                    <span class="text-gray-800 font-semibold">
+                        {{ review.student.full_name|first|upper }}{% if review.student.last_name %}{{ review.student.last_name|first|upper }}{% endif %}
+                    </span>
+                {% else %}
+                    <a href="{% url 'user' review.student.pk %}" class="text-gray-800 font-semibold hover:underline">
+                        {% if review.student.pk == user.pk %}
+                            You
+                        {% else %}
+                            {{ review.student.full_name }}
+                        {% endif %}
+                    </a>
+                {% endif %}
+                <span class="flex items-center gap-1">
+                    {% for i in review.rating|range_filter %}
+                        <svg class="w-4 h-4 text-yellow-400 inline" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.196-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z"/>
+                        </svg>
+                    {% endfor %}
+                    {% for i in 5|subtract:review.rating|range_filter %}
+                        <svg class="w-4 h-4 text-gray-200 inline" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.196-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z"/>
+                        </svg>
+                    {% endfor %}
+                </span>
+            </div>
+        </div>
+        <div class="ml-16 text-gray-700 mb-2">
+            {{ review.review }}
+        </div>
+        <div class="ml-16 text-xs text-gray-400">
+            {{ review.created_at|timesince_single }}
+        </div>
+    </div>
+    {% empty %}
+        <div class="text-gray-400 italic">No reviews for this course yet.</div>
+    {% endfor %}
+</div>

@@ -1,0 +1,75 @@
+{% load bootstrap4 %}
+{% load static %}
+{% load django_htmx %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta description="OnlineU, an E-Learning site">
+        <meta name="keywords" content="Django, E-Learning, Learning, Online, University">
+        <meta name="author" content="Lara">
+        <title>OnlineU E-Learning Site</title>
+        {% bootstrap_javascript jquery='full' %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/output.css' %}" >
+        <script src="{% static 'js/general.js' %}" ></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        {% htmx_script %}
+    </head>
+    <body class="flex flex-col w-full items-center py-16 px-64" hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+        <!-- Header Bar -->
+        <div class="w-full flex flex-row items-center justify-between mb-10">
+            <div class="flex-1"></div>
+            <div class="flex flex-col items-center flex-none">
+                <h1 class="text-4xl font-bold mb-2">OnlineU</h1>
+                <div role="tablist" class="tabs tabs-border">
+                    <a role="tab" class="tab {% if request.path == '/' %}tab-active{% endif %} text-sm" href="/">Home</a>
+                    {% if user.is_authenticated %}
+                        <a role="tab" class="tab {% if '/courses' in request.path %}tab-active{% endif %} text-sm" href="/courses">Explore</a>
+                        {% if user.role == 'Teacher' %}
+                            <a role="tab" class="tab {% if '/users' in request.path %}tab-active{% endif %} text-sm" href="/users">Users</a>
+                        {% endif %}
+                    {% else %}
+                        <a role="tab" class="tab {% if request.path == '/register/' %}tab-active{% endif %} text-sm" href="/register">Register</a>
+                        <a role="tab" class="tab {% if request.path == '/login/' %}tab-active{% endif %} text-sm" href="/login">Log In</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex-1 flex justify-end items-center relative">
+                {% if user.is_authenticated %}
+                    <button id="avatar-btn" class="ml-4 focus:outline-none" onclick="toggleAvatarMenu(event)">
+                        {% include 'components/avatar.html' with user=user size=10 %}
+                    </button>
+                    <div id="avatar-menu" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 hidden">
+                        <a href="/users/{{ user.pk }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                        <button onclick="logoutUser()" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Global editor modal -->
+        <div
+            id="modal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden"
+            onclick="if(event.target === this) closeModal();"
+        >
+        </div>
+        <script>
+            function openModal() {
+                document.getElementById("modal").classList.remove("hidden");
+            }
+            function closeModal() {
+                document.getElementById("modal").classList.add("hidden");
+            }
+            function toggleAvatarMenu(event) {
+                event.stopPropagation();
+                const menu = document.getElementById("avatar-menu");
+                menu.classList.toggle("hidden");
+                // Close menu if clicking outside
+                document.addEventListener("click", function handler(e) {
+                    if (!menu.contains(e.target) && e.target.id !== "avatar-btn") {
+                        menu.classList.add("hidden");
+                        document.removeEventListener("click", handler);
+                    }
+                });
+            }
+        </script>

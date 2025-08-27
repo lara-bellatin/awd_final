@@ -1,0 +1,378 @@
+{% extends './base.html' %}
+{% load static %}
+{% block content %}
+<div class="flex flex-col gap-10 w-full">
+
+    <!-- Course Information -->
+    <div class="flex flex-col gap-6 bg-slate-50 border border-slate-200 rounded-xl w-full p-8 items-center">
+        <!-- Cover Image -->
+        {% if course.cover_image %}
+            <div class="w-full h-48 rounded-lg overflow-hidden mb-4">
+                {% include 'components/cover_image.html' with picture=course.cover_image title=course.title height='full' %}
+            </div>
+        {% endif %}
+
+        <!-- Information -->
+        <div class="flex flex-col gap-2 w-full items-center max-w-2xl">
+            <h2 class="text-3xl font-bold text-gray-800 mb-1">{{ course.title }}</h2>
+            <p class="text-xs text-gray-500">
+                Taught by {{ course.taught_by.full_name }}
+            </p>
+            {% if course.description %}
+                <p class="text-gray-600 text-center mb-2">{{ course.description }}</p>
+            {% endif %}
+            <div class="flex flex-row items-center gap-3 mb-2">
+                <div class="px-3 py-1 rounded-xl text-sm bg-slate-200 text-slate-600 font-medium">
+                    {{ course.duration_weeks }} week{{ course.duration_weeks|pluralize }}
+                </div>
+                {% if not course.is_published %}
+                    <div class="px-3 py-1 rounded-xl text-sm bg-gray-100 text-gray-400 font-medium">
+                        Not published
+                    </div>
+                {% elif course.status == "upcoming" %}
+                    <div class="px-3 py-1 rounded-xl text-sm bg-blue-100 text-blue-700 font-medium">
+                        Upcoming
+                    </div>
+                {% else %}
+                    {% if course.review_count > 0 %}
+                        <div class="flex items-center gap-1 px-3 py-1 rounded-xl text-sm bg-yellow-50 text-yellow-700 font-medium">
+                            <svg class="w-4 h-4 text-yellow-400 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.196-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z"/>
+                            </svg>
+                            {{ course.average_rating|floatformat:1 }}
+                            <span class="text-xs text-gray-400 ml-1">({{ course.review_count }} review{{ course.review_count|pluralize }})</span>
+                        </div>
+                    {% else %}
+                        <div class="px-3 py-1 rounded-xl text-sm bg-gray-100 text-gray-400 font-medium">
+                            No reviews yet
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <div class="flex flex-row items-center gap-2 mb-2">
+                <span class="text-xs text-gray-500">
+                    {{ course.start_date|date:"M d, Y" }} &ndash; {{ course.end_date|date:"M d, Y" }}
+                </span>
+            </div>
+    
+            <!-- Call to action for teacher who created the course (edit) -->
+            <div class="flex flex-row items-center gap-3 mt-2">
+                {% if course.taught_by == user %}
+                    <button
+                        type="button"
+                        onclick="openModal()"
+                        class="inline-block px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition"
+                        hx-get="{% url 'course-edit' course.pk %}"
+                        hx-target="#modal"
+                        hx-trigger="click"
+                    >
+                        Edit Info
+                    </button>
+                    {% if not course.is_published %}
+                        <button
+                            type="button"
+                            onclick="publishCourse({{ course.pk }})"
+                            class="inline-block px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition"
+                        >
+                            Publish
+                        </button>
+                    {% endif %}
+                <!-- Call to action for students (enroll) -->
+                {% elif not user_enrollment or user_enrollment.status == 'Canceled' %}
+                    <button
+                        type="button"
+                        onclick="{% if user.is_authenticated %}enroll({{ user.pk }}, {{ course.pk }}){% else %}window.location.href='/login';{% endif %}"
+                        class="mt-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-500 transition"
+                    >
+                        Enroll
+                    </button>
+                {% elif user_enrollment.status == 'Active' %}
+                    <button
+                        type="button"
+                        onclick="updateEnrollmentStatus({{ user_enrollment.pk }}, 'Canceled')"
+                        class="inline-block px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition"
+                    >
+                        Cancel Enrollment
+                    </button>
+                    <button
+                        type="button"
+                        onclick="startChat(users=[{{ user.pk }}, {{ course.taught_by.pk }}])"
+                        class="inline-block px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition"
+                    >
+                        Message Teacher
+                    </button>
+                    <button
+                        type="button"
+                        onclick="openModal()"
+                        class="inline-block px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition"
+                        hx-get="{% url 'status-update-create' %}?course={{ course.pk|urlencode }}"
+                        hx-target="#modal"
+                        hx-trigger="click"
+                    >
+                        Post Status Update
+                    </button>
+                {% elif user_enrollment.status == 'Completed' %}
+                    <button class="px-4 py-2 rounded-lg bg-gray-200 text-gray-500 text-sm font-medium cursor-not-allowed" disabled>
+                        Completed
+                    </button>
+                    {% if not user_reviewed %}
+                        <button
+                            type="button"
+                            onclick="openModal()"
+                            class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-500 transition"
+                            hx-get="{% url 'course-review' course.pk %}"
+                            hx-target="#modal"
+                            hx-trigger="click"
+                        >
+                            Leave a Review
+                        </button>
+                    {% endif %}
+                    {% if user_enrollment.final_grade %}
+                        <span class="text-green-700 text-sm font-semibold mt-1 block">
+                            Final Grade: {{ user_enrollment.final_grade }}
+                        </span>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Main Content -->
+    <div class="flex flex-row gap-8 w-full">
+        {% if course.taught_by == user %}
+            <!-- User is the teacher (teaching dashboard) -->
+            <!-- Main Content: Syllabus + Enrollments + Assignment Submissions -->
+            <div class="flex flex-col w-3/4 gap-4">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button id="tab-syllabus-btn"
+                        class="px-4 py-2 font-semibold text-gray-700 border-b-2 border-blue-600 focus:outline-none"
+                        onclick="showTeacherTab('syllabus')">
+                        Syllabus
+                    </button>
+                    <button id="tab-students-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showTeacherTab('students')">
+                        Students
+                    </button>
+                    <button id="tab-submissions-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showTeacherTab('submissions')">
+                        Assignments
+                    </button>
+                    <button id="tab-feed-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showTeacherTab('feed')">
+                        Feed
+                    </button>
+                    <button id="tab-reviews-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showTeacherTab('reviews')">
+                        Reviews
+                    </button>
+                </div>
+                <!-- Content -->
+                <div id="tab-syllabus" class="block">
+                    {% include 'components/course_syllabus.html' with course=course %}
+                </div>
+                <div id="tab-students" class="hidden">
+                    {% include 'components/students_gallery.html' with students=enrolled_students %}
+                </div>
+                <div id="tab-submissions" class="hidden">
+                    {% include 'components/submissions_gallery.html' with submissions=assignment_submissions %}
+                </div>
+                <div id="tab-feed" class="hidden">
+                    {% include 'components/status_update_gallery.html' with status_updates=status_updates show_course=False %}
+                </div>
+                <div id="tab-reviews" class="hidden">
+                    {% include 'components/course_review_gallery.html' with reviews=course.course_reviews.all %}
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Notifications -->
+            <div class="flex flex-col w-1/4 py-6 px-6 gap-4">
+                <h1 class="font-bold text-xl border-b border-gray-400 mb-2">
+                    Notifications
+                </h1>
+                {% include 'components/notifications_list.html' with notifications=notifications go_to_course=False %}
+            </div>
+
+        {% elif not user.is_authenticated or not user_enrollment or user_enrollment.status != 'Active' %}
+
+            <!-- User is unauthenticated, another teacher or a student not enrolled (basic info) -->
+            <!-- Main Content: Syllabus + Reviews -->
+            <div class="flex flex-col w-3/4 gap-4">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button id="tab-syllabus-btn"
+                        class="px-4 py-2 font-semibold text-gray-700 border-b-2 border-blue-600 focus:outline-none"
+                        onclick="showCourseTab('syllabus')">
+                        Syllabus
+                    </button>
+                    <button id="tab-reviews-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showCourseTab('reviews')">
+                        Reviews
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div id="tab-syllabus" class="block">
+                    <h1 class="font-bold text-2xl text-gray-800 mb-1">Syllabus</h1>
+                    {% include 'components/course_syllabus.html' with course=course module_form=module_form lesson_form=lesson_form assignment_form=assignment_form %}
+                </div>
+                <div id="tab-reviews" class="hidden">
+                    <h1 class="font-bold text-2xl text-gray-800 mb-1">Reviews</h1>
+                    {% include 'components/course_review_gallery.html' with reviews=course.course_reviews.all %}
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Teacher information -->
+            <div class="flex flex-col w-1/4 bg-slate-50 border border-slate-200 rounded-xl py-6 px-6 gap-4 shadow-sm">
+                {% include 'components/teacher_info.html' with teacher=course.taught_by %}
+            </div>
+
+        {% else %}
+
+            <!-- User is enrolled (learning dashboard) -->
+            <!-- Main Content: Dashboard + Grades + Feed + Reviews -->
+            <div class="flex flex-col w-3/4 gap-4">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button id="tab-dashboard-btn"
+                        class="px-4 py-2 font-semibold text-gray-700 border-b-2 border-blue-600 focus:outline-none"
+                        onclick="showUserTab('dashboard')">
+                        Dashboard
+                    </button>
+                    <button id="tab-grades-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showUserTab('grades')">
+                        Grades
+                    </button>
+                    <button id="tab-feed-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showUserTab('feed')">
+                        Feed
+                    </button>
+                    <button id="tab-reviews-btn"
+                        class="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent focus:outline-none"
+                        onclick="showUserTab('reviews')">
+                        Reviews
+                    </button>
+                </div>
+                <!-- Content -->
+                <div id="tab-dashboard" class="block">
+                    {% if course.status == "upcoming" %}
+                        {% include 'components/course_syllabus.html' with course=course %}
+                    {% else %}
+                        {% include 'components/user_course_dashboard.html' with course=course completed_lessons=completed_lessons submitted_assignments=submitted_assignments %}
+                    {% endif %}
+                </div>
+                <div id="tab-grades" class="hidden">
+                    {% include 'components/student_grades.html' with assignments=course.get_all_assignments.all submissions=submitted_assignments %}
+                </div>
+                <div id="tab-feed" class="hidden">
+                    {% include 'components/status_update_gallery.html' with status_updates=status_updates show_course=False %}
+                </div>
+                <div id="tab-reviews" class="hidden">
+                    {% include 'components/course_review_gallery.html' with reviews=course.course_reviews.all %}
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Notifications -->
+            <div class="flex flex-col w-1/4 py-6 px-6 gap-4">
+                <h1 class="font-bold text-xl border-b border-gray-400 mb-2">
+                    Notifications
+                </h1>
+                {% include 'components/notifications_list.html' with notifications=notifications go_to_course=False %}
+            </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showCourseTab(tab) {
+    // Hide all
+    document.getElementById('tab-syllabus').classList.add('hidden');
+    document.getElementById('tab-reviews').classList.add('hidden');
+    document.getElementById('tab-syllabus-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-syllabus-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-reviews-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-reviews-btn').classList.add('text-gray-500', 'border-transparent');
+    // Show selected
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    document.getElementById('tab-' + tab + '-btn').classList.add('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-' + tab + '-btn').classList.remove('text-gray-500', 'border-transparent');
+    // Store selected tab
+    localStorage.setItem('courseTab', tab);
+}
+
+function showUserTab(tab) {
+    // Hide all
+    document.getElementById('tab-dashboard').classList.add('hidden');
+    document.getElementById('tab-grades').classList.add('hidden');
+    document.getElementById('tab-feed').classList.add('hidden');
+    document.getElementById('tab-reviews').classList.add('hidden');
+    document.getElementById('tab-dashboard-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-dashboard-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-grades-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-grades-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-feed-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-feed-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-reviews-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-reviews-btn').classList.add('text-gray-500', 'border-transparent');
+    // Show selected
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    document.getElementById('tab-' + tab + '-btn').classList.add('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-' + tab + '-btn').classList.remove('text-gray-500', 'border-transparent');
+    // Store selected tab
+    localStorage.setItem('userTab', tab);
+}
+
+function showTeacherTab(tab) {
+    // Hide all
+    document.getElementById('tab-syllabus').classList.add('hidden');
+    document.getElementById('tab-students').classList.add('hidden');
+    document.getElementById('tab-submissions').classList.add('hidden');
+    document.getElementById('tab-feed').classList.add('hidden');
+    document.getElementById('tab-reviews').classList.add('hidden');
+    document.getElementById('tab-syllabus-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-syllabus-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-students-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-students-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-submissions-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-submissions-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-feed-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-feed-btn').classList.add('text-gray-500', 'border-transparent');
+    document.getElementById('tab-reviews-btn').classList.remove('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-reviews-btn').classList.add('text-gray-500', 'border-transparent');
+    // Show selected
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    document.getElementById('tab-' + tab + '-btn').classList.add('text-gray-700', 'border-blue-600');
+    document.getElementById('tab-' + tab + '-btn').classList.remove('text-gray-500', 'border-transparent');
+    // Store selected tab
+    localStorage.setItem('teacherTab', tab);
+}
+
+// Restore last selected tab from localstorage
+document.addEventListener('DOMContentLoaded', function() {
+    // Course Info tabs
+    var courseTab = localStorage.getItem('courseTab');
+    if (courseTab && document.getElementById('tab-' + courseTab)) {
+        showCourseTab(courseTab);
+    }
+    // User tabs
+    var userTab = localStorage.getItem('userTab');
+    if (userTab && document.getElementById('tab-' + userTab)) {
+        showUserTab(userTab);
+    }
+    // Teacher tabs
+    var teacherTab = localStorage.getItem('teacherTab');
+    if (teacherTab && document.getElementById('tab-' + teacherTab)) {
+        showTeacherTab(teacherTab);
+    }
+});
+</script>
+{% endblock %}
