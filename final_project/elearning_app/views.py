@@ -116,7 +116,7 @@ class HomePageView(ListView):
                 for course in courses:
                     course.user_progress = round(course.get_user_progress(user), 1)
         else:
-            teacher_group = Group.objects.get_or_create(name=User.UserRole.TEACHER)
+            teacher_group, _ = Group.objects.get_or_create(name=User.UserRole.TEACHER)
             context["teachers"] = teacher_group.user_set.all()
 
         return context
