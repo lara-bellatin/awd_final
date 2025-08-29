@@ -94,7 +94,11 @@
                                             <span class="text-yellow-600 text-xs font-semibold">Submitted, awaiting grade</span>
                                         {% endif %}
                                     {% else %}
-                                        <span class="text-red-500 text-xs font-semibold">Not submitted</span>
+                                        {% if assignment.deadline|is_past %}
+                                            <span class="text-red-500 text-xs font-semibold">Overdue</span>
+                                        {% else %}
+                                            <span class="text-blue-500 text-xs font-semibold">Not submitted</span>
+                                        {% endif %}
                                     {% endif %}
                                 {% endwith %}
                             </a>
