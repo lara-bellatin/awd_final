@@ -1,4 +1,4 @@
-from django.urls import path, include, re_path
+from django.urls import path, re_path
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,

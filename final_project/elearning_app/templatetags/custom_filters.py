@@ -1,5 +1,6 @@
 from django import template
 from django.utils.timesince import timesince, timeuntil
+from django.utils import timezone
 
 register = template.Library()
 
@@ -55,3 +56,11 @@ def add_class(field, css):
 @register.inclusion_tag('components/forms/render_form_fields.html')
 def render_form_fields(form):
     return {"form": form}
+
+@register.filter
+def is_past(value):
+    """Returns True if the datetime value is in the past."""
+    if not value:
+        return False
+    now = timezone.now()
+    return value < now

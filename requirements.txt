@@ -18,3 +18,4 @@ uritemplate==4.2.0
 inflection==0.5.1
 drf-spectacular==0.28.0
 python-dotenv==1.1.1
+coverage==7.10.5
